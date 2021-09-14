@@ -1,15 +1,12 @@
-Tarjan_SCC_in_R
-
-R implementation of Tarjan's algorithm for finding Strongly Connected Components in a digraph
+This is an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS)
 
 Contacts:
    e.settanni@eng.cam.ac.uk
    July-August 2021
 
-i have developed this implementation from scratch for self-learning/self-study. it is based on my own (limited) understadinding of the original pseudocode, and build on flowcharts I sketched during Summer 2021
+Developed from scratch for self-study and with the sole purpose of checking my own understanding of this famous algorithm. it is based on my own reading (or misreading) the original pseudocode, and builds upon while-type loops to implement the original 'nested' pseudocode.
 
 useful References 
-PSEUDOCODES
  1) Original academic paper: Page 157, Tarjan (1972) doi:10.1137/0201010
  2) Deo (1974) Graph Theory [but for undirected graphs]
  3) wikipedia: https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm#The_algorithm_in_pseudocode
