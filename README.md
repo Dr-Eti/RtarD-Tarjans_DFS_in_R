@@ -2,9 +2,8 @@ This is an R implementation of Tarjan's algorithm for finding Strongly Connected
 
 Contacts:
    e.settanni@eng.cam.ac.uk
-   July-August 2021
-
-Developed from scratch for self-study and with the sole purpose of checking my own understanding of this famous algorithm. it is based on my own reading (or misreading) the original pseudocode, and builds upon while-type loops to implement the original 'nested' pseudocode.
+   
+Developed from scratch for self-study during summer 2021. it is based on my own reading of the original pseudocode.
 
 useful References 
  1) Original academic paper: Page 157, Tarjan (1972) doi:10.1137/0201010
