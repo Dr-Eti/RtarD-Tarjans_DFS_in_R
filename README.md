@@ -15,4 +15,4 @@ useful references
  7) Hume D., Litsey J., and Plemmons (1981) p 272 - see Google books https://books.google.co.uk/books?id=pEMsAQAAIAAJ&pg=PA272&lpg=PA272&dq=duff+and+reid+block+triangularization&source=bl&ots=zlTT95Usx-&sig=ACfU3U3GkBU0av0mI459KObNAqyrc-1sTw&hl=en&sa=X&ved=2ahUKEwiWkKnBlKbyAhUSesAKHXmZArcQ6AF6BAgREAM#v=onepage&q=duff%20and%20reid%20block%20triangularization&f=false
 
 
-Benchmarks include BUILT-IN functions in e.g. Gephi - claims it implement Tarjan's algorithm - amd igraph.
+Benchmarks include BUILT-IN functions in e.g. Gephi - claims it implement Tarjan's algorithm - and igraph.
