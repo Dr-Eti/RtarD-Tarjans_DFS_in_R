@@ -1,5 +1,5 @@
-This is an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS)
-It is coupled with the problem of finding a block-triangular permutation for the adjacency of the associated digraph (works under certain conditions)
+This is an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS). 
+It is coupled with the problem of finding a block-triangular permutation for the adjacency matrix of the associated digraph (works under certain conditions)
 Please not this code was developed from scratch for the purpose of self-study. It is based on my own reading of the original pseudocode and makes no claims with regards to performance.
 
 Useful references 
