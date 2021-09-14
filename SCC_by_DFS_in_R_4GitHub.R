@@ -54,29 +54,29 @@ gc()
 # ),ncol = 8, byrow = TRUE)
 
 # STRANG EXAMPLE intro to applied math p 637
-test_m <- matrix(c(
-  0, 0, 1, 0,
-  1, 0, 0, 1,
-  1, 0, 0, 0,
-  0, 0, 1, 0
-), ncol = 4, byrow = TRUE)
+# test_m <- matrix(c(
+#   0, 0, 1, 0,
+#   1, 0, 0, 1,
+#   1, 0, 0, 0,
+#   0, 0, 1, 0
+# ), ncol = 4, byrow = TRUE)
 
 # Princeton example https://algs4.cs.princeton.edu/42digraph/
-# test_m <- matrix(c(
-#   0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-#   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-#   1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-#   0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-#   0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-#   0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-#   1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
-#   0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
-#   0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
-#   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
-#   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
-#   0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-#   0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
-# ),ncol = 13, byrow = TRUE)
+test_m <- matrix(c(
+  0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+),ncol = 13, byrow = TRUE)
 
 #### 00.3 - initialise: automated node labelling ####
 n_nodes <- ncol(test_m)
@@ -335,27 +335,37 @@ while(dummy4){
               level <- level - 1                    # go one back to the previous node in the depth-first sequence
               if (level > 0){
                 # GET BACK TI WHERE YOU LEFT THINGS AT THE PREVIOUS LEVEL
-                back_idx <- which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0)     # there may be more than one node with the same level if E.G. ONE NEIGHBOUR IS A SINK but the other isn't. We ignore the sink
-                v <- util_table_df[back_idx, "v_node"]                                                  
-                v_label <-  node_names[v]
-                n_successors <- util_table_df[back_idx, "successors"]
-                k_back_idx_a <- as.numeric(which(util_table_df[, "v_node"] == v))
-                util_table_df_subset <- util_table_df[k_back_idx_a,]
-                if(length(k_back_idx_a) > 1){
-                  k_back_idx_b <- max(which(!is.na(util_table_df_subset[, "k_successor_idx"])))               # retrieve last successor index explored for the current node
-                  k <- util_table_df_subset[k_back_idx_b , "k_successor_idx"]
-                  w_k <- util_table_df_subset[k_back_idx_b , "w_k_node"]
-                } else {
-                  k <- as.numeric(util_table_df_subset["k_successor_idx"])
-                  w_k <- as.numeric(util_table_df_subset["w_k_node"])
+                
+                # NEW: fixes the case in which there is no successor going up one level
+                test_any_successor <- length(which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0))     # test if at this level there may be no successor
+                while(test_any_successor == 0 & level > 1){
+                  level <- level - 1                                                                                          # if there is no successor, keep going backwards
+                  test_any_successor <- length(which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0))   
                 }
-                w <- as.numeric(util_table_df[k_back_idx_a, "w_k_node"])
-                w_labels <- node_names[w]
-                sink_test <- which(is.na(w_labels))                                                         # check if the successor is a sink node
-                # re-do test
-                test0 <- is.na(node_numbering[w_k,"node_number"])                                 # we can jump onto this node (depth first)
-                test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]      # the next node has been visited already?
-                test2 <- node_numbering[w_k,"node_onStack"] == 1                                  # the next node is in the stack already
+                
+                if (test_any_successor != 0 & level > 0){
+                  back_idx <- which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0)       # there may be more than one node with the same level if E.G. ONE NEIGHBOUR IS A SINK but the other isn't. We ignore the sink
+                  v <- util_table_df[back_idx, "v_node"]                                                  
+                  v_label <-  node_names[v]
+                  n_successors <- util_table_df[back_idx, "successors"]
+                  k_back_idx_a <- as.numeric(which(util_table_df[, "v_node"] == v))
+                  util_table_df_subset <- util_table_df[k_back_idx_a,]
+                  if(length(k_back_idx_a) > 1){
+                    k_back_idx_b <- max(which(!is.na(util_table_df_subset[, "k_successor_idx"])))               # retrieve last successor index explored for the current node
+                    k <- util_table_df_subset[k_back_idx_b , "k_successor_idx"]
+                    w_k <- util_table_df_subset[k_back_idx_b , "w_k_node"]
+                  } else {
+                    k <- as.numeric(util_table_df_subset["k_successor_idx"])
+                    w_k <- as.numeric(util_table_df_subset["w_k_node"])
+                  }
+                  w <- as.numeric(util_table_df[k_back_idx_a, "w_k_node"])
+                  w_labels <- node_names[w]
+                  sink_test <- which(is.na(w_labels))                                                         # check if the successor is a sink node
+                  # re-do test
+                  test0 <- is.na(node_numbering[w_k,"node_number"])                                 # we can jump onto this node (depth first)
+                  test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]      # the next node has been visited already?
+                  test2 <- node_numbering[w_k,"node_onStack"] == 1                                  # the next node is in the stack already
+                }
               }
             }
           } # end of Loop 4 (dummy 3)
