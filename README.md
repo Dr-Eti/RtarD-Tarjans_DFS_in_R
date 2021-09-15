@@ -1,6 +1,6 @@
 This is an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS). 
 It is coupled with the problem of finding a block-triangular permutation for the adjacency matrix of the associated digraph (works under certain conditions)
-Please not this code was developed from scratch for the purpose of self-study. It is based on my own reading of the original pseudocode and makes no claims with regards to performance.
+Please note that this code was developed from scratch for the purpose of self-study. It is based on my own reading of the original pseudocode and makes no claims with regards to performance.
 
 Useful references 
  1) Original academic paper: Page 157, Tarjan (1972) doi:10.1137/0201010
@@ -11,7 +11,7 @@ Useful references
  6) Strang (1986) Introduction to Applied Mathematics. ISBN 0-9614088-0-4, Ch. 16 (doesn't implement Tarjan but refers to earlier work)
  7) Hume and Plemmons (1981) p 272 in thid Google book https://books.google.co.uk/books?id=pEMsAQAAIAAJ&pg=PA272&lpg=PA272&dq=duff+and+reid+block+triangularization&source=bl&ots=zlTT95Usx-&sig=ACfU3U3GkBU0av0mI459KObNAqyrc-1sTw&hl=en&sa=X&ved=2ahUKEwiWkKnBlKbyAhUSesAKHXmZArcQ6AF6BAgREAM#v=onepage&q=duff%20and%20reid%20block%20triangularization&f=false
 
-Obvioulsy there are plenty of better-performing alternatives out there - but these may be harder to access for an R user (e.g. the source code may not be written in R for whatever reason). Examples include BUILT-IN functions in e.g. Gephi, and igraph. Typically, these implementations of SCC by DFS do not address the problem of finding a block-diagonal permuation of the adjacency matrix (when possible).
+Obviously there are plenty of better-performing alternatives out there - but these may be harder to access for an R user (e.g. the source code may not be written in R for whatever reason). Examples include BUILT-IN functions in e.g. Gephi, and igraph. Typically, these implementations of SCC by DFS do not address the problem of finding a block-diagonal permutation of the adjacency matrix (when possible).
 
 Contacts/queries:  e.settanni@eng.cam.ac.uk
 Prepared: July-August 2021
