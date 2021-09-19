@@ -12,6 +12,3 @@ Useful references
  7) Hume and Plemmons (1981) p 272 in thid Google book https://books.google.co.uk/books?id=pEMsAQAAIAAJ&pg=PA272&lpg=PA272&dq=duff+and+reid+block+triangularization&source=bl&ots=zlTT95Usx-&sig=ACfU3U3GkBU0av0mI459KObNAqyrc-1sTw&hl=en&sa=X&ved=2ahUKEwiWkKnBlKbyAhUSesAKHXmZArcQ6AF6BAgREAM#v=onepage&q=duff%20and%20reid%20block%20triangularization&f=false
 
 Obviously there are plenty of better-performing alternatives out there - but these may be harder to access for an R user (e.g. the source code may not be written in R for whatever reason). Examples include BUILT-IN functions in e.g. Gephi, and igraph. Typically, these implementations of SCC by DFS do not address the problem of finding a block-diagonal permutation of the adjacency matrix (when possible).
-
-Contacts/queries:  e.settanni@eng.cam.ac.uk
-Prepared: July-August 2021
