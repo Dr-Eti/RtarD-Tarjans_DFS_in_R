@@ -1,5 +1,5 @@
 This is an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS). 
-It is coupled with the problem of finding a block-triangular permutation for the adjacency matrix of the associated digraph (works under certain conditions)
+This specific code uses while loops instead of a recursion. This is because writing a function calling itself - as in the original pseudocode - using the R syntax is not straightforward (unlike, for example, JavaScript). Also, in this code the search for SCC is coupled with the problem of finding a block-triangular permutation for the adjacency matrix of the associated digraph (works under certain conditions).
 Please note that this code was developed from scratch for the purpose of self-study. It is based on my own reading of the original pseudocode and makes no claims with regards to performance.
 
 Useful references 
@@ -11,4 +11,4 @@ Useful references
  6) Strang (1986) Introduction to Applied Mathematics. ISBN 0-9614088-0-4, Ch. 16 (doesn't implement Tarjan but refers to earlier work)
  7) Hume and Plemmons (1981) p 272 in thid Google book https://books.google.co.uk/books?id=pEMsAQAAIAAJ&pg=PA272&lpg=PA272&dq=duff+and+reid+block+triangularization&source=bl&ots=zlTT95Usx-&sig=ACfU3U3GkBU0av0mI459KObNAqyrc-1sTw&hl=en&sa=X&ved=2ahUKEwiWkKnBlKbyAhUSesAKHXmZArcQ6AF6BAgREAM#v=onepage&q=duff%20and%20reid%20block%20triangularization&f=false
 
-Obviously there are plenty of better-performing alternatives out there - but these may be harder to access for an R user (e.g. the source code may not be written in R for whatever reason). Examples include BUILT-IN functions in e.g. Gephi, and igraph. Typically, these implementations of SCC by DFS do not address the problem of finding a block-diagonal permutation of the adjacency matrix (when possible).
+Obviously there are plenty of better-performing, readily-available alternatives out there. Examples include built-in functions in Gephi, and igraph. But I am not aware of DFS-based SCC functions written for R that are not wrappers for code written in another language.  Also, I am not aware of implementations that jointly address the problem of finding a block-diagonal permutation of the adjacency matrix (when possible).
