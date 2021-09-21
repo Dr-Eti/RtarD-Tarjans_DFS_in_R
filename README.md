@@ -1,5 +1,5 @@
 This is an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS). 
-This specific code uses while loops instead of a recursion. This is because writing a function calling itself - as in the original pseudocode - using the R syntax is not straightforward (unlike, for example, JavaScript). Also, in this code the search for SCC is coupled with the problem of finding a block-triangular permutation for the adjacency matrix of the associated digraph (works under certain conditions).
+This specific code uses while loops instead of a recursion - a function calling itself. This is because writing  recursions - as in the original pseudocode - is not straightforward using the R syntax (unlike JavaScript). Also, in this code the search for SCC is coupled with the problem of finding a block-triangular permutation for the adjacency matrix of the associated digraph (works under certain conditions).
 Please note that this code was developed from scratch for the purpose of self-study. It is based on my own reading of the original pseudocode and makes no claims with regards to performance.
 
 Useful references 
