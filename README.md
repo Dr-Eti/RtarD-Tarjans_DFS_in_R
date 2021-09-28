@@ -1,4 +1,4 @@
-# RtarD - finding strongly connected components in a digraph using R
+# RtarD - find strongly connected components in a digraph using R
 
 This code implements in ***R*** the uber-famous ***Tar***jan's algorithm for finding strongly connected components in a digraph by ***D***epth-first Search
 
