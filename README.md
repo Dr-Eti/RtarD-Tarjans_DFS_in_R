@@ -1,4 +1,4 @@
-# RtarD - an R implementation of Tarjan's algorithm for finding Strongly Connected Components (SCC) in a digraph by Depth-First Search (DFS)
+# RtarD - an *R* implementation of *Tar*jan's algorithm for finding strongly connected components in a digraph by *D*epth-first Search
 
 ## what's the point?
 I hear you. Obviously there are plenty of better-performing, readily-available alternatives out there to work out the strongly connected components (SCC) in a digraph using Depth-First Search (DFS) - an algorithm developed by R. Tarjan in 1972. Examples include built-in functions in Gephi (https://gephi.org/); some Java freebies straight out of the book Algorithms 4th ed (https://algs4.cs.princeton.edu/42digraph/); and the multi-platform package igraph (https://igraph.org/redirect.html). To add insult to injury, the latter is readily available for R.
