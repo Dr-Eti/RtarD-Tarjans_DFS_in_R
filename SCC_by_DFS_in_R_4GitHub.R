@@ -1,26 +1,27 @@
 ###  Find Strongly Connected Components in a digraph by Depth-First Search [Tarjan]
 
-#### -1.0 - Revision notes ####
-# Major edits on 30 10 2021 - 11 10 2021
-#   A revision was required to investigate and fix a 'loss' of component elements. The loss emerged during the analysis of larger matrices than those provided in the examples below.
-#   The main change introduced by this version is that the second lowlink update (the one during backtracking) 
-#   may need few iterations before all nodes' lowlink values are actually set to correspond to the lowest lowlink value among their successors.
-#   another, minor update is that, when the successor of a node is a sink, there is no reason for the node to inherit its successor's lowlink value, even if lower;
-#   otherwise they might erroneously end up in the same component, which doesn't really make sense when the graph is directed.
-
-#### -1.1 - intro: date, author, contact ####
-# Coding timeline
-#   Start:      13 07 2021
-#   End:        06 08 2021
-#   Fixes:      19 08 2021
-#   for GitHub: 14 09 2021
-#   This REV    02 11 2021
+#### -1.0 - Contacts ####
 #
 # Author:
 #   Ettore Settanni
 #   e.settanni@eng.cam.ac.uk
 #   Cambridge
 #
+
+#### -1.1 - Revision notes ####
+# Coding timeline
+#   Start:       13 07 2021
+#   End:         06 08 2021
+#   Fixes:       19 08 2021
+#   for GitHub:  14 09 2021
+#   REV01        02 11 2021    # loops the lowlink update in backtracking until the node's lowlink value pick up the smallest lowlink amongst its successors
+#   REV02        10 11 2021    # a node's successor may haves successors but these may be sinks - in which case, don't update lowlink
+#   REV03 (this) 13 11 2021    # fixes how the sack is popped (REV02 was a patch, but would fail). Keeps the intuition of REV01: the iteration is still needed
+
+#   One thing I didn't notice when using 'while loops' is the need for extra iterations when we're done backtracking to ensure a correct lowlink update (affecting stack-popping) 
+#   Iterations may be needed before all nodes' lowlink values are actually set to correspond to the lowest lowlink value among their successors.
+#   Also until REV02 I've got the stack-popping routine misplaced, which would fail in certain instances.
+
 
 #### -1.2 - motivation, references & caveats ####
 
@@ -71,21 +72,21 @@ gc()
 # ), ncol = 4, byrow = TRUE)
 
 ## Princeton example https://algs4.cs.princeton.edu/42digraph/
-test_m <- matrix(c(
-  0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-  1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
-),ncol = 13, byrow = TRUE)
+# test_m <- matrix(c(
+#   0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+#   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+#   1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+#   0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+#   0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+#   0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+#   1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+#   0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
+#   0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
+#   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+#   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+#   0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+#   0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+# ),ncol = 13, byrow = TRUE)
 
 
 #### 00.3 - initialise: automated node labelling ####
@@ -127,6 +128,7 @@ util_table <- lapply(1:n_nodes, function(z){
                 "v_lowlink", 
                 "successors", 
                 "k_successor_idx", 
+                "successor_k_is_sink", # (REV02)
                 "w_k_node", 
                 #"w_k_label", 
                 "w_k_number", 
@@ -141,16 +143,22 @@ util_table <- lapply(1:n_nodes, function(z){
 })
 util_table_df <- do.call(rbind, util_table)
 
+
+
+
 #### 01.2 - initialise stuff ####
 
 # initialise counter
 n <- n_nodes
 i <- 0
-c <- 0                                                                                                     # component counter
+comp_count <- 0                                                                                                     # component counter
 
 # initialise condition flags
 nodes_not_numbered_yet <- n
 test0 <- TRUE
+
+
+
 
 # initialise lists
 Stack_S <- list()
@@ -176,7 +184,7 @@ while(dummy4){
     v_label <- node_names[v]
   }
   
-  # newly added
+  # REV01
   flag_extra_round <- TRUE                                                                                 # for use later during backtracking to add an extra round and avoid some issues with updating values at the very end
   extra_round_counter <- 0
   
@@ -192,15 +200,16 @@ while(dummy4){
     node_numbering[v,"node_onStack"] <- 1
     # successors
     w_labels <- unlist(successors[v])
-    sink_test <- which(is.na(w_labels))                                                                    # check if successor is a sink node
-    # update predecessor (unless first node)
-    # if (i > 1){                                                                                          # this old line was replaced: unless the first node is also a sink node, it may well be it is some other node's predecessor
-    back_idx <- which(util_table_df[,"w_k_node"] == v)                                                     # ... I guess we could use this information to single out sink nodes already
+    
+    # update records were v features as successor
+    back_idx <- which(util_table_df[,"w_k_node"] == v)                                                     
     if (length(back_idx) > 0){  
       util_table_df[back_idx, "w_k_number"] <- node_numbering[v,"node_number"]
       util_table_df[back_idx, "w_k_lowlink"] <- node_numbering[v,"node_lowlink"]
     }
-    if(length(sink_test) == 0){
+    # check if successor is a sink node
+    sink_test <- which(is.na(w_labels))                                                                    
+    if (length(sink_test) == 0){
       w <- match(w_labels, node_names)
       n_successors <- length(w)
     } else {
@@ -229,7 +238,7 @@ while(dummy4){
             util_table_df[util_table_df_subset,][k,"successors"] <- n_successors
           }
           util_table_df[util_table_df_subset,][k,"k_successor_idx"] <- k
-          util_table_df[util_table_df_subset,][k,"w_k_node"] <- w_k                                        # could be removed... 
+          # util_table_df[util_table_df_subset,][k,"w_k_node"] <- w_k                                        # could be removed... 
           util_table_df[util_table_df_subset,][k,"w_k_number"] <- node_numbering[w_k,"node_number"]
           util_table_df[util_table_df_subset,][k,"w_k_lowlink"] <- node_numbering[w_k, "node_lowlink"]
         } else {
@@ -243,7 +252,7 @@ while(dummy4){
             util_table_df[util_table_df_subset,"successors"] <- n_successors
           }
           util_table_df[util_table_df_subset,"k_successor_idx"] <- k
-          util_table_df[util_table_df_subset,"w_k_node"] <- w_k                                            # could be removed... 
+          # util_table_df[util_table_df_subset,"w_k_node"] <- w_k                                            # could be removed... 
           util_table_df[util_table_df_subset,"w_k_number"] <- node_numbering[w_k,"node_number"]
           util_table_df[util_table_df_subset,"w_k_lowlink"] <- node_numbering[w_k, "node_lowlink"]
         }
@@ -254,8 +263,8 @@ while(dummy4){
       } else {                                                                                             # there is no successor to the current node (sink)
         # tests
         test0 <- FALSE                                                                                     # forces to backtrack if there is no successor
-        test1 <- NA
-        test2 <- NA
+        test1 <- FALSE
+        test2 <- FALSE
         # update main tableau (df version)
         util_table_df_subset <- which(rownames(util_table_df) == v_label)                                  # filter for the current node v
         util_table_df[util_table_df_subset,"i"] <- i
@@ -270,6 +279,8 @@ while(dummy4){
         util_table_df[util_table_df_subset,"w_k_number"] <- (-1)
         util_table_df[util_table_df_subset,"w_k_lowlink"] <- (-1)
       }
+      
+      test_POP <- FALSE
   
       # THIS IS WHERE WE DECIDE WHETHER TO CONTINUE DEPTH-FIRST, LOOK INTO A NEIGHBOUR, OR BACKTRACK
       if (test0){
@@ -291,81 +302,85 @@ while(dummy4){
         dummy5 <- TRUE
         while(dummy5){
           if(k != 0 & k < n_successors) {                                                                  # there are other adjacent nodes left to explore
-            dummy3 <- FALSE                                                                                # skip the next loop, break out and go increase k 
             dummy5 <- FALSE
-          } else {
-            dummy3 <- TRUE   
-          }  
-          # the test below is needed anyway unless we are in a sink node
-          if(length(sink_test) == 0){                                                                      # we are not at a sink node
-            # if successor is a sink then don't update or they will end up in the same component
-            test3 <- FALSE
-            successor_successors <- which(util_table_df[,"v_node"] == util_table_df[which(rownames(util_table_df) == v_label),"w_k_node"][k])
-            if(util_table_df[successor_successors,"successors"][1]>0){test3 <- TRUE}
-            if (test1 & test2 & test3){                                                                    # the current k successor has been visited PRIOR to v (has lower number), and it is on the stack already
-              # update lowlink values - FIRST TYPE (going downwards)  
+            
+            # update lowlink values - FIRST TYPE (going downwards)
+            if (test1 == TRUE & test2 == TRUE){                                                             # the current k successor has been visited PRIOR to v (has lower number), and it is on the stack already
               node_numbering[v,"node_lowlink"] <- min(node_numbering[v,"node_lowlink"],node_numbering[w_k,"node_number"])
-              util_table_df_subset <- which(rownames(util_table_df) == v_label)                            # filter for the current node v
+              util_table_df_subset <- which(rownames(util_table_df) == v_label)                              # filter for the current node v
               if(length(util_table_df_subset) > 1){
-                util_table_df[util_table_df_subset,][1,"v_lowlink"] <- node_numbering[v,"node_lowlink"]    # always update the first line, corresponding to v
+                util_table_df[util_table_df_subset,][1,"v_lowlink"] <- node_numbering[v,"node_lowlink"]      # always update the first line, corresponding to v
               } else {
                 util_table_df[util_table_df_subset,"v_lowlink"] <- node_numbering[v,"node_lowlink"]
               }
               # update lowlink elsewhere
-              #if (i > 1){
               other_idx <- which(util_table_df[,"w_k_node"] == v)
               if(length(other_idx)>0){
-                util_table_df[ other_idx, "w_k_lowlink"] <- node_numbering[v,"node_lowlink"]
+                util_table_df[other_idx, "w_k_lowlink"] <- node_numbering[v,"node_lowlink"]
               }
             }
-          }
-          
-          # Loop #4: revisit all the neighbours already visited
-          while (dummy3) {
-            if(n_successors !=0 & k !=0){                                                                  # we are not at a sink node / we have not re-visited all the neighbors
-              # test if successor is a sink then don't update or they will end up in the same component
-              test3 <- FALSE
-              successor_successors <- which(util_table_df[,"v_node"] == util_table_df[which(rownames(util_table_df) == v_label),"w_k_node"][k])
-              if(util_table_df[successor_successors,"successors"][1]>0){test3 <- TRUE}
-              if (test2 & test3){                                                                          # the next node is already in the stack AND IT IS NOT A SINK
-                # update lowlink values - SECOND TYPE (ascending)
-                node_numbering[v,"node_lowlink"] <- min(node_numbering[v,"node_lowlink"],node_numbering[w_k,"node_lowlink"])
-                util_table_df_subset <- which(rownames(util_table_df) == v_label)                          # filter for the current node v
-                if(length(util_table_df_subset) > 1){
-                  util_table_df[util_table_df_subset,][1,"v_lowlink"] <- node_numbering[v,"node_lowlink"]  # always update the first line, corresponding to v
-                } else {
-                  util_table_df[util_table_df_subset,"v_lowlink"] <- node_numbering[v,"node_lowlink"]
-                }
-                # update lowlink elsewhere
-                #if (i > 1){
-                other_idx <- which(util_table_df[,"w_k_node"] == v)
-                if(length(other_idx)>0){
-                  util_table_df[ other_idx, "w_k_lowlink"] <- node_numbering[v,"node_lowlink"]
-                }
-              }
-              k <- k - 1                                                                                   # go back to the previous neighbour already visted
-              if (k !=0){
-                w_k <- w[k] 
-                #re-do the test
-                test0 <- is.na(node_numbering[w_k,"node_number"])                                          # we can jump onto this node (depth first)
-                test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]               # the next node has been visited already?
-                test2 <- node_numbering[w_k,"node_onStack"] == 1                                           # the next node is in the stack already
-              } else {
-                test2 <- FALSE
-                w_k <- (-1)
-              }
-            } else {                                                                                       # either we are at a sink node or we have re-visited all the neighbors
-              dummy3 <- FALSE                                                                              # break loop 4 after moving one level up
-              level <- level - 1                                                                           # go one back to the previous node in the depth-first sequence
-              
-              # The below wraps the second ("upwards") lowlink update into an iteration - without this, a few lowlink updates may go unnoticed
-              if (level >= 0){
+            
+            
+          } else {
+            dummy3 <- TRUE 
+            # Loop #4: revisit all the neighbours already visited
+            while (dummy3) {
+              if(n_successors !=0 & k !=0){                         # we are not at a sink node / we have not re-visited all the neighbors 
                 
-                # The below checks that, when you've reached level 0, all nodes' lowlink values matches the lowest  lowlink of their successors.
-                # if that's not the case it may be that we need more rounds of update
-                if (level ==0 & flag_extra_round){
-                  extra_round_counter <- extra_round_counter + 1
+                # re-do test
+                test0 <- is.na(node_numbering[w_k,"node_number"])                                 # we can jump onto this node (depth first)
+                test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]      # the next node has been visited already?
+                test2 <- node_numbering[w_k,"node_onStack"] == 1                                  # the next node is in the stack already
+                
+                
+                if (test2){                                                                       # the next node is STILL on the stack PLEASE DO NOT ADD TEST 1 OR WILL MESS UP
+                  # update lowlink values - SECOND TYPE (ascending)
+                  old_v_lowlink <- node_numbering[v,"node_lowlink"]
+                  node_numbering[v,"node_lowlink"] <- min(node_numbering[v,"node_lowlink"],node_numbering[w_k,"node_lowlink"])
+                  util_table_df_subset <- which(rownames(util_table_df) == v_label)                              # filter for the current node v
+                  if(length(util_table_df_subset) > 1){
+                    util_table_df[util_table_df_subset,][1,"v_lowlink"] <- node_numbering[v,"node_lowlink"]      # always update the first line, corresponding to v
+                  } else {
+                    util_table_df[util_table_df_subset,"v_lowlink"] <- node_numbering[v,"node_lowlink"]
+                  }
+                  # update lowlink elsewhere
+                  other_idx <- which(util_table_df[,"w_k_node"] == v)                                            
+                  if(length(other_idx)>0){
+                    util_table_df[other_idx, "w_k_lowlink"] <- node_numbering[v,"node_lowlink"]
+                  }
+                }
+                
+                
+                # go back to the previous neighbour already visited
+                k <- k - 1                          
+                if (k !=0){
+                  w_k <- w[k] 
+                  #re-do the test
+                  test0 <- is.na(node_numbering[w_k,"node_number"])                                 # we can jump onto this node (depth first)
+                  test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]      # the next node has been visited already?
+                  test2 <- node_numbering[w_k,"node_onStack"] == 1                                  # the next node is in the stack already
+                } else {
+                  test2 <- FALSE
+                  test1 <- FALSE
+                  test0 <- FALSE
+                  w_k <- (-1)
+                }
+              } else {
+                # either we are at a sink node or we have re-visited all the neighbors
+                
+                # NEW: WHEN WE ARE HERE, WE ARE FORCING THE BACKTRACKING - THERE WAS NO PATH LEADING US back to previously encountered nodes
+                # therefore we MUST NOT UPDATE LOWLINK when we encounter a node we visited before
+                # if v is a root node (lowlink = number), we can pop the stack at this stage
+                test_POP <- node_numbering[v,"node_number"] == node_numbering[v,"node_lowlink"]       # from Tarjan's original paper
+                
+                # BEFORE POPPING
+                abort_POP <- (test_POP & level == 1)
+                if (abort_POP & flag_extra_round){
+                  # we reached the last level (at least until we restart with level 1); WE NEED TO make sure that all nodes' lowlink values matches the lowest  lowlink of their successors.
+                  # It happens that the root node gets popped out then the lowlink update occurs, and a bunch of nodes are left without root and can't pop next
+                  # if that's not the case it may be that we need more rounds of update
                   
+                  extra_round_counter <- extra_round_counter + 1
                   # the below checks that we DON'T HAVE NODES WITH THE LATEST SUCCESSOR'S LOWLINK VALUE BEING lower THAN THE NODE'S LOWLINK
                   # if a node's LOWLINK is larger than the lowest among its successors' LOWLINK the we need to keep updating
                   update_needed <- lapply(Stack_S, function(x){
@@ -373,34 +388,97 @@ while(dummy4){
                     v_neigb_lowest_lowlink <- min(util_table_df[which(util_table_df[,"v_node"] == x) , "w_k_lowlink"])
                     if(v_neigb_lowest_lowlink > 0){                                                       # sink nodes by convention get "-1" in this field which might cause looping forever
                       if(v_lowlink != v_neigb_lowest_lowlink){
-                        1 
+                        1
                       } else {0}
                     } else {0}
+                    
                   })
                   updates_test <- sum(unlist(update_needed))
                   if(updates_test > 0 & extra_round_counter < 4){
-                    level <- max(util_table_df[which(!is.na(util_table_df[,"level"])),"level"])           # start all over again, hoping we get all the lowlinks updated
+                    # reset the level to a max but add one and let the loop later pick which level is righ
+                    level <- max(util_table_df[which(!is.na(util_table_df[,"level"])),"level"]) + 1          # start all over again, hoping we get all the lowlinks updated
+                    test_POP <- FALSE                                                                        # ABORT POPPING FOR NOW
                   } else {
                     flag_extra_round <- FALSE                                                             # break out of this
+                    abort_POP <- FALSE
+                  }
+                  
+                  
+                }
+                
+                if (test_POP){
+                  # THIS IS WHERE WE POP THE STACK AND POPULATE THE COMPONENT
+                  # update count of nodes not numbered yet
+                  nodes_not_numbered_yet <- length(which(is.na(node_numbering[,"node_number"])))
+                  
+                  # NEW: we want to pop the stack but only using v as a root (leave other nodes alone, if any) - different test to enter the stack-popping stage
+                  temp_idx <- as.numeric(which(!is.na(node_numbering[,"node_number"])))
+                  temp_subset_a <- which(node_numbering[temp_idx, "node_number"] >= node_numbering[v,"node_number"])
+                  nodes_visited_so_far <- match(names(temp_subset_a[as.numeric(which(node_numbering[names(temp_subset_a), "node_onStack"] == 1))]), node_names)
+                  
+                  Stack_S_BACKUP <- Stack_S
+                  Component_list_BACKUP <- Component_list
+                  # Start of "Pop nodes" sub, but only if we're done with depth-first search
+                  
+                  # NEW: notice that the loop below should go from node "v" onward
+                  for(r in nodes_visited_so_far){
+                    x <- as.numeric(node_numbering[r,])
+                    if (x[1] == x[2]){                         # the node is a root node
+                      comp_count <- comp_count + 1                               # component number
+                      # put nodes in component
+                      temp_component_list <- lapply(1:length(Stack_S), function(s){
+                        y <- Stack_S[[s]]
+                        pop_test1 <- node_numbering[y, "node_number"] >= x[1]
+                        pop_test2 <- node_numbering[y, "node_lowlink"] == x[2]
+                        if(pop_test1 & pop_test2){
+                          y
+                        }
+                      })
+                      to_delete <- unlist(temp_component_list)
+                      Component_list[[comp_count]] <- to_delete
+                      # pop elements out of stack
+                      #idx_delete <- which(Stack_S == to_delete)
+                      temp_idx_delete <- rep(seq_along(Stack_S), sapply(Stack_S, length))         # thread: https://stackoverflow.com/questions/11002391/fast-way-of-getting-index-of-match-in-list
+                      idx_delete <- temp_idx_delete[match(to_delete, unlist(Stack_S))]            
+                      Stack_S[idx_delete] <- NULL
+                      
+                      # update j or the size of the stack will change later
+                      j <- j - length(idx_delete)
+                      
+                      # update table
+                      node_numbering[to_delete,"node_onStack"] <- (-1)    # mark elements that have been on stack, but no longer are
+                    }
                   }
                 }
                 
-                # GET BACK WHERE YOU LEFT THINGS AT THE PREVIOUS LEVEL
-                # (the following fixes the case in which there is no successor going up one level)
-                test_any_successor <- length(which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0))     # test if at this level there may be no successor
-                while(test_any_successor == 0 & level > 1){
-                  level <- level - 1                                                                                          # if there is no successor, keep going backwards
-                  test_any_successor <- length(which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0))   
+                
+                
+                dummy3 <- FALSE                                                                                                    # break loop 4 after moving one level up - REGARDLESS of popping the stack
+                
+                # NEW: modified version of finding the "right level" to go back to
+                
+                # ignore if we're forcing one last iteration to update lowling - special case
+                test_skip <- FALSE
+                while(!test_skip & level > 0){
+                  level <- level - 1                                                                                             # if there is no successor OR the node at this level is not on the stack, keep going backwards
+                  if(level != 0){
+                    v_temp <- util_table_df[which(util_table_df[,"level"] == level),"v_node"]
+                    level_on_stack <- (node_numbering[v_temp,"node_onStack"] == 1)                                               # skip levels that correspond to nodes that have been removed from stack
+                    test_any_successor <- length(which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0))    # (no successor going up one level)
+                    test_skip <- (level_on_stack & test_any_successor > 0)
+                  }
                 }
-                if (test_any_successor != 0 & level > 0){
-                  back_idx <- which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0)                     # there may be more than one node with the same level if E.G. ONE NEIGHBOUR IS A SINK but the other isn't. We ignore the sink
+                
+                # GET BACK TO WHERE YOU LEFT THINGS AT THE PREVIOUS LEVEL
+                if (level > 0){
+                  back_idx <- which(util_table_df[,"level"] == level & util_table_df[, "successors"] !=0)       # there may be more than one node with the same level if E.G. ONE NEIGHBOUR IS A SINK but the other isn't. We ignore the sink
                   v <- util_table_df[back_idx, "v_node"]                                                  
                   v_label <-  node_names[v]
                   n_successors <- util_table_df[back_idx, "successors"]
                   k_back_idx_a <- as.numeric(which(util_table_df[, "v_node"] == v))
                   util_table_df_subset <- util_table_df[k_back_idx_a,]
                   if(length(k_back_idx_a) > 1){
-                    k_back_idx_b <- max(which(!is.na(util_table_df_subset[, "k_successor_idx"])))                             # retrieve last successor index explored for the current node
+                    k_back_idx_b <- max(which(!is.na(util_table_df_subset[, "k_successor_idx"])))               # retrieve last successor index explored for the current node
                     k <- util_table_df_subset[k_back_idx_b , "k_successor_idx"]
                     w_k <- util_table_df_subset[k_back_idx_b , "w_k_node"]
                   } else {
@@ -409,68 +487,34 @@ while(dummy4){
                   }
                   w <- as.numeric(util_table_df[k_back_idx_a, "w_k_node"])
                   w_labels <- node_names[w]
-                  sink_test <- which(is.na(w_labels))                                                      # check if the successor is a sink node
+                  sink_test <- which(is.na(w_labels))                                                         # check if the successor is a sink node
                   # re-do test
-                  test0 <- is.na(node_numbering[w_k,"node_number"])                                        # we can jump onto this node (depth first)
-                  test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]             # the next node has been visited already?
-                  test2 <- node_numbering[w_k,"node_onStack"] == 1                                         # the next node is in the stack already
+                  test0 <- is.na(node_numbering[w_k,"node_number"])                                 # we can jump onto this node (depth first)
+                  test1 <- node_numbering[w_k,"node_number"] < node_numbering[v,"node_number"]      # the next node has been visited already?
+                  test2 <- node_numbering[w_k,"node_onStack"] == 1                                  # the next node is in the stack already
                 }
               }
+            } # end of Loop 4 (dummy 3)
+            if(level == 0) {
+              dummy5 <- FALSE                                                                                # break loop 3
+              dummy1 <- FALSE                                                                                # break loop 2 (ends up in the same place as if there were no successors)
             }
-          } # end of Loop 4 (dummy 3)
-          if(level == 0) {
-            dummy5 <- FALSE                                                                                # break loop 3
-            dummy1 <- FALSE                                                                                # break loop 2 (ends up in the same place as if there were no successors)
-          }
+          }  
         }  # end of Loop 3 (dummy 5)
-        #  end of "back tracking" sub
-      } 
+      } #  end of ELSE - "back tracking" sub
     } # end of Loop 2 (dummy1)
-    
-    # THIS IS WHERE WE POP THE STACK AND POPULATE THE COMPONENT
-    # update count of nodes not numbered yet
     nodes_not_numbered_yet <- length(which(is.na(node_numbering[,"node_number"])))
     nodes_visited_so_far <- as.numeric(which(!is.na(node_numbering[,"node_number"]) & node_numbering[,"node_onStack"] == 1))
-    if(!test0){
-      Stack_S_BACKUP <- Stack_S
-      Component_list_BACKUP <- Component_list
-      # Start of "Pop nodes" sub, but only if we're done with depth-first search
-      for(r in nodes_visited_so_far){
-        x <- as.numeric(node_numbering[r,])
-        if (x[1] == x[2]){                                                                                 # the node is a root node
-          c <- c + 1                                                                                       # component number
-          # put nodes in component
-          temp_component_list <- lapply(1:length(Stack_S), function(s){
-            y <- Stack_S[[s]]
-            pop_test1 <- node_numbering[y, "node_number"] >= x[1]
-            pop_test2 <- node_numbering[y, "node_lowlink"] == x[2]
-            if(pop_test1 & pop_test2){
-              y
-            }
-          })
-          to_delete <- unlist(temp_component_list)
-          Component_list[[c]] <- to_delete
-          # pop elements out of stack
-          #idx_delete <- which(Stack_S == to_delete)
-          temp_idx_delete <- rep(seq_along(Stack_S), sapply(Stack_S, length))                              # thread: https://stackoverflow.com/questions/11002391/fast-way-of-getting-index-of-match-in-list
-          idx_delete <- temp_idx_delete[match(to_delete, unlist(Stack_S))]            
-          Stack_S[idx_delete] <- NULL
-          # update table
-          node_numbering[to_delete,"node_onStack"] <- (-1)                                                 # mark elements that have been on stack, but no longer are
-        }
+    if(!test0 & test_POP){
+      if(nodes_not_numbered_yet == 0){                                                                     # break Loop 1 (depths first exploration of successors, jumping between nodes) and move up one level
+        dummy4 <- FALSE                                                                                    # break Loop 5: YOU'RE DONE
       }
-      # need to re-label the LEVELS used so that they do not interefere with the next component
+      dummy0 <- FALSE                                                                                      # break Loop 1
+      # if we are here, we'll restart the level counter. re-label the LEVELS used so that they do not interefere with the next component
       util_table_df_BACKUP <- util_table_df
       idx_change_level <- which(!is.na(util_table_df[,"level"]) & util_table_df[,"level"] > 0)
       util_table_df[idx_change_level,"level"] <- (-1)*util_table_df[idx_change_level,"level"]
-      # restart for next component or terminate
-      if(nodes_not_numbered_yet != 0){
-        dummy0 <- FALSE                                                                                    # break Loop 1 (depths first exploration of successors, jumping between nodes) and move up one level
-      }  else {
-        dummy4 <- FALSE                                                                                    # break Loop 5: YOU'RE DONE
-        dummy0 <- FALSE                                                                                    # break Loop 1
-      }
-    } ## end of "Pop nodes" sub
+    }
   } # end of Loop 1 (dummy0)
 } # end of Loop 0 (dummy4)
 
@@ -480,8 +524,8 @@ while(dummy4){
 # - all vertices within a strongly connected component are numbered sequentially
 # - if there exists and edge from a vertex in component i to a vertex in component j, then all vertices in component i are labelled before all those in component j
 n_components <- length(Component_list)
-x_components_idx <- expand.grid(1:n_components, 1:n_components)       # equivalent to nested for
-x_components_idx <- x_components_idx[, ncol(x_components_idx):1]      # flip
+x_components_idx <- expand.grid(1:n_components, 1:n_components)                                                     # equivalent to nested for
+x_components_idx <- x_components_idx[, ncol(x_components_idx):1]                                                    # flip
 x_comp_link <- apply(x_components_idx, 1, function(x){
   if(x[1] != x[2]){
     comp_nodes_a <- Component_list[[as.numeric(x[1])]]
@@ -493,7 +537,7 @@ x_comp_link <- apply(x_components_idx, 1, function(x){
 })
 preced_comp <- x_components_idx[which(x_comp_link > 0),]
 colnames(preced_comp) <- c("precedent", "consequent")
-ord_comp <- c(1:c)                                                   # arrange components number in an array
+ord_comp <- c(1:comp_count)                                                                                         # arrange components number in an array
 ord_comp_UPDATE <- ord_comp
 swap_track <- list()
 for(i in 1:nrow(preced_comp)){
@@ -506,7 +550,7 @@ for(i in 1:nrow(preced_comp)){
   b <- as.numeric(preced_comp[i,2])
   a_pos <- as.numeric(match(a, dummy_ord))
   b_pos <- as.numeric(match(b, dummy_ord))
-  if (a_pos > b_pos){                                                # a should precede b but a is currently placed after b
+  if (a_pos > b_pos){                                                                                               # a should precede b but a is currently placed after b
     dummy_ord[b_pos] <- a
     dummy_ord[a_pos] <- b
   }
@@ -514,7 +558,7 @@ for(i in 1:nrow(preced_comp)){
   ord_comp_UPDATE <- dummy_ord
 }
 # obtain permutation
-permuted_lines <- unlist(Component_list[ord_comp_UPDATE])                    # re-order components in the list
+permuted_lines <- unlist(Component_list[ord_comp_UPDATE])                                                           # re-order components in the list
 permuted_m <- test_m[permuted_lines, permuted_lines]
 #### 03 - view the outputs ####
 Component_list
@@ -525,3 +569,14 @@ permuted_m
 library(igraph)
 G_ig <- graph_from_adjacency_matrix(as.matrix(test_m), mode = "directed")
 components(G_ig, mode = "strong")
+
+test_SCC_tab <- lapply(1:length(Component_list),function(comp_count){
+  x <- Component_list[[comp_count]]
+  temp_rows <- length(x)
+  Comp_ID <- rep(comp_count,temp_rows)
+  cbind(Comp_ID, x)
+})
+tab_comp <- do.call(rbind, test_SCC_tab)
+tab_comp_df <- as.data.frame(tab_comp)
+#tab_comp_df[order(tab_comp_df$x),]
+table(tab_comp_df$Comp_ID)
